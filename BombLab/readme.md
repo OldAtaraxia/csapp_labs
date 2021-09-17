@@ -129,19 +129,19 @@ phase_2具体的过程
   400f0e:	74 20                	je     400f30 <phase_2+0x34>
   400f10:	e8 25 05 00 00       	callq  40143a <explode_bomb>
   400f15:	eb 19                	jmp    400f30 <phase_2+0x34>
-  400f17:	8b 43 fc             	mov    -0x4(%rbx),%eax
+  400f17:	8b 43 fc             	mov    -0x4(%rbx),%eax // <phase_2+0x1b>
   400f1a:	01 c0                	add    %eax,%eax
   400f1c:	39 03                	cmp    %eax,(%rbx)
   400f1e:	74 05                	je     400f25 <phase_2+0x29>
   400f20:	e8 15 05 00 00       	callq  40143a <explode_bomb>
-  400f25:	48 83 c3 04          	add    $0x4,%rbx
+  400f25:	48 83 c3 04          	add    $0x4,%rbx // <phase_2+0x29>
   400f29:	48 39 eb             	cmp    %rbp,%rbx
   400f2c:	75 e9                	jne    400f17 <phase_2+0x1b>
   400f2e:	eb 0c                	jmp    400f3c <phase_2+0x40>
   400f30:	48 8d 5c 24 04       	lea    0x4(%rsp),%rbx // <phase_2+0x34>
   400f35:	48 8d 6c 24 18       	lea    0x18(%rsp),%rbp
   400f3a:	eb db                	jmp    400f17 <phase_2+0x1b>
-  400f3c:	48 83 c4 28          	add    $0x28,%rsp
+  400f3c:	48 83 c4 28          	add    $0x28,%rsp // <phase_2+0x40>
   400f40:	5b                   	pop    %rbx
   400f41:	5d                   	pop    %rbp
   400f42:	c3                   	retq   
@@ -173,8 +173,8 @@ phase_2具体的过程
 * 把rsi的值移入rdx
 * 把rsi+0x4移入rcx
 * 把rsi+0x14移入rax
-* 把rax值移入rsp+0x8
-* 把rsi_0x10移入rax
+* 把rax值移入memory[rsp+0x8]
+* 把rsi+0x10移入rax
 * 把rax的值移入memory[rsp]
 * 把rsi+0xc移入r9
 * 把rsi+0x8移入r8
@@ -182,5 +182,45 @@ phase_2具体的过程
 * 调用sscanf
 * 比较rax与0x5的大小,相等就跳到40145c+3d = 401499
 
-众所周知C 库函数 **int sscanf(const char \*str, const char \*format, ...)** 从字符串读取格式化输入。如果成功，该函数返回成功匹配和赋值的个数。如果到达文件末尾或发生读错误，则返回 EOF。所以这里应该是需要成功匹配5个数?
+众所周知C 库函数 **int sscanf(const char \*str, const char \*format, ...)** 从字符串读取格式化输入。如果成功，该函数返回成功匹配和赋值的个数。如果到达文件末尾或发生读错误，则返回 EOF。这里如果读入的数字大于5个就跳转到read_six_number+0x3d, 否则就爆炸(是的,验证过了)
+
+这里其实是读入了六个整数然后放在了phase_2中分配的栈上的空间里, 比如我输入1, 2, 3, 4,5,6
+
+```assembly
+(gdb) x $rsp
+0x7ffffffee260: 0x00000001
+(gdb) x $rsp+0x4
+0x7ffffffee264: 0x00000002
+(gdb) x $rsp+0x8
+0x7ffffffee268: 0x00000003
+(gdb) x $rsp+0xc
+0x7ffffffee26c: 0x00000004
+(gdb) x $rsp+0x10
+0x7ffffffee270: 0x00000005
+(gdb) x $rsp+0x14
+0x7ffffffee274: 0x00000006
+```
+
+重大发现啊.
+
+那么我们继续看, 1与%rsp(即输入的第一个数字)比较,不相等则引爆,相等则跳到400f30处, 向rbx中写入rsp+0x4, 向rbp中写入rsp+0x18, 然后跳到400f17处.然后向rax中写入memory[rsp],让这个值加上自身(*2), 然后与rsp+0x4的值比较,看是否是两倍, 不是就引爆炸弹,是的话后跳到400F25, 让rbx中地址+0x4(),然后将rbp与rbx中的值作比较, 若不等于则跳转到400f17重复之前的操作.
+
+所以需要的序列是`1 2 4 8 16 32`
+
+```
+Welcome to my fiendish little bomb. You have 6 phases with
+which to blow yourself up. Have a nice day!
+Border relations with Canada have never been better.
+Phase 1 defused. How about the next one?
+1 2 4 8 16 32
+
+Breakpoint 1, 0x000000000040145c in read_six_numbers ()
+(gdb) continue
+Continuing.
+That's number 2.  Keep going!
+```
+
+### phase_3
+
+
 
