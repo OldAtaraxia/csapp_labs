@@ -419,8 +419,6 @@ So you got that one.  Try this one.
 
 ### phase_5
 
-### phase_5
-
 ```
 0000000000401062 <phase_5>:
   401062: 53                    push   %rbx
