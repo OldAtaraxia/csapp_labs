@@ -101,7 +101,7 @@ Phase 1 defused. How about the next one?
 
 题外话:
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=Y2FiNjk5MjE3M2IxNGFiNjk2NWM3ODQ0YmZlMDA3MzZfMndUcFhVOG5pRFlOYlhseWNkTGVSdFFydDRQcnVXa29fVG9rZW46Ym94Y251bGszMjlkUDF1WDBoaXM2T0lWRXgwXzE2MzIwMzYwMTA6MTYzMjAzOTYxMF9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=NDYyNmQ4MzAyNzlmZmNkNWE2MTQxOTBkMjM4M2U3NjFfMzhBdkNXZXlwMDZoS1lhaWxUdmlqVEY3TmRuZWh2YkVfVG9rZW46Ym94Y251bGszMjlkUDF1WDBoaXM2T0lWRXgwXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
 read_lines的返回值是读入的字符串在内存中存放的位置。
 
@@ -225,8 +225,15 @@ Welcome to my fiendish little bomb. You have 6 phases withwhich to blow yourself
 
 ### phase_3
 
+调用过程与前两个是同样的
 
 ```
+  400e60: bf ed 22 40 00        mov    $0x4022ed,%edi
+  400e65: e8 a6 fc ff ff        callq  400b10 <puts@plt>
+  400e6a: e8 2f 06 00 00        callq  40149e <read_line>
+  400e6f: 48 89 c7              mov    %rax,%rdi
+  400e72: e8 cc 00 00 00        callq  400f43 <phase_3>
+  400e77: e8 48 07 00 00        callq  4015c4 <phase_defused>
 0000000000400f43 <phase_3>:
   400f43: 48 83 ec 18           sub    $0x18,%rsp
   400f47: 48 8d 4c 24 0c        lea    0xc(%rsp),%rcx
@@ -263,12 +270,12 @@ Welcome to my fiendish little bomb. You have 6 phases withwhich to blow yourself
   400fc2: 74 05                 je     400fc9 <phase_3+0x86>
   400fc4: e8 71 04 00 00        callq  40143a <explode_bomb>
   400fc9: 48 83 c4 18           add    $0x18,%rsp
-  400fcd: c3                    retq     
+  400fcd: c3                    retq   
 ```
 
 可以看到`sscanf`, 格式为`%d %d`
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=NjQ3MjYyNDEwNTQxYmEyN2I1NzVjMjRlZWM4MmZhODZfdXlpMVR5NWQ2eGVRTkJ1NkxXaEZ4S1pFaEEyaHZLdzlfVG9rZW46Ym94Y25pVnM1MU1DTEliOTZ3V0VFMkZLOWxiXzE2MzIwMzYwMTA6MTYzMjAzOTYxMF9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=M2MyYTAyZTgxM2FlNTZjOGNkYTQ3OTUzMmRjNjkzOThfSWlBMTVLMHl3aXd5d01IdHpMZ3J6bTUzcGxKeDNEbTJfVG9rZW46Ym94Y25pVnM1MU1DTEliOTZ3V0VFMkZLOWxiXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
 - 栈上开0x18的空间
 
@@ -278,7 +285,7 @@ Welcome to my fiendish little bomb. You have 6 phases withwhich to blow yourself
 
 - rsi里写立即数$0x4025cf(翻译成字符串是"%d %d")
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=YzExY2Q0OWVkNTQyYzliNTQ3ODY3NWI2M2FkZGExYmRfYlNqeWswd2dqeDg1NlZ6R3IwQ3o1RlhTT0tINzRPNUFfVG9rZW46Ym94Y25DT1FwYlZUYThaUkFYWHRsWXZlUG1kXzE2MzIwMzYwMTA6MTYzMjAzOTYxMF9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=MzZhODk2MGZkMWE5MGM5NjA3YWM3NjEwNDFmNjlhZjRfQVpQWlptdW9rbVdOeTNvM0NLbXl0aHltcURtaEFBYmNfVG9rZW46Ym94Y25DT1FwYlZUYThaUkFYWHRsWXZlUG1kXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
 - rax里写立即数0x0
 
@@ -301,22 +308,69 @@ Welcome to my fiendish little bomb. You have 6 phases withwhich to blow yourself
 - 这时候可以回去看上面的意义不明的跳转了, 我们去memory[0x402470]附近看看
 
 ```
-(gdb) x/a 0x4024700x402470:       0x400f7c <phase_3+57>(gdb) x/a 0x402470 + 0x80x402478:       0x400fb9 <phase_3+118>(gdb) x/a 0x402470 + 0x8 + 0x80x402480:       0x400f83 <phase_3+64>(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x80x402488:       0x400f8a <phase_3+71>(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x80x402490:       0x400f91 <phase_3+78>(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x8 + 0x80x402498:       0x400f98 <phase_3+85>(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8 + 0x80x4024a0:       0x400f9f <phase_3+92>(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8 + 0x80x4024a8:       0x400fa6 <phase_3+99>
+(gdb) x/a 0x402470
+0x402470:       0x400f7c <phase_3+57>
+(gdb) x/a 0x402470 + 0x8
+0x402478:       0x400fb9 <phase_3+118>
+(gdb) x/a 0x402470 + 0x8 + 0x8
+0x402480:       0x400f83 <phase_3+64>
+(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8
+0x402488:       0x400f8a <phase_3+71>
+(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x8
+0x402490:       0x400f91 <phase_3+78>
+(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8
+0x402498:       0x400f98 <phase_3+85>
+(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8
+0x4024a0:       0x400f9f <phase_3+92>
+(gdb) x/a 0x402470 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8 + 0x8
+0x4024a8:       0x400fa6 <phase_3+99>
 ```
 
 果然有很大的收获, 这些地址就是上面mov的地址. 根据读到的第一个数的不同我会带着不同的rax值到达400fbe.而400fbe这里是拿rax和读入的第二个数比较,也就是说只要两个数是对应的,炸弹就不会爆炸.
 
 那么对应的答案有:(0,207), (1, 311), (2,707),(3,256),(4,389),(5,206),(6,682),(7,327)
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=MDAwZjgzMjcyNzBmYTM4MDFjZGQzNmQ2YzJmZWQyNDdfZWNRUGhOTElrU25VQXhDUkQyaFM1NFZKd1hpanJ5NHpfVG9rZW46Ym94Y25YRXFtYUNsTHlVNGVTNUFBVTIzREVkXzE2MzIwMzYwMTA6MTYzMjAzOTYxMF9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=ODJmY2RkMTcyN2FhNzA0Yzk0Y2MwOGUyOWQ1MzYxMTVfdEt3VWl6eEZpTnNObkhFOTZPMW1NWGkzTmg4RE94S0tfVG9rZW46Ym94Y25YRXFtYUNsTHlVNGVTNUFBVTIzREVkXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
 经过测试看到所有的组都满足条件.
 
 btw笑死我了2333
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=OTI2ZjIxNzVjMzZmODBhMzY1NTI3ZWY5MTAwYmIyNTVfbm44dEFyVG9GZ08yZ3VUcnZoM1hiTkNwdHpTcDhkWXBfVG9rZW46Ym94Y245R0dBSnNiS2NjRHp4aEpPSkcyOExiXzE2MzIwMzYwMTA6MTYzMjAzOTYxMF9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=OTEzMWJjZTFiMTAzNjhkMDczZTJiZDgxMDk1YTRjNjVfbmhXdERkNk8yVFNIaXV2MGh5d0NUVXVIOWtEb3Zrd1lfVG9rZW46Ym94Y245R0dBSnNiS2NjRHp4aEpPSkcyOExiXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
 ### phase_4
+
+```
+000000000040100c <phase_4>:
+  40100c: 48 83 ec 18           sub    $0x18,%rsp
+  401010: 48 8d 4c 24 0c        lea    0xc(%rsp),%rcx
+  401015: 48 8d 54 24 08        lea    0x8(%rsp),%rdx
+  40101a: be cf 25 40 00        mov    $0x4025cf,%esi
+  40101f: b8 00 00 00 00        mov    $0x0,%eax
+  401024: e8 c7 fb ff ff        callq  400bf0 <__isoc99_sscanf@plt>
+  401029: 83 f8 02              cmp    $0x2,%eax
+  40102c: 75 07                 jne    401035 <phase_4+0x29>
+  40102e: 83 7c 24 08 0e        cmpl   $0xe,0x8(%rsp)
+  401033: 76 05                 jbe    40103a <phase_4+0x2e>
+  401035: e8 00 04 00 00        callq  40143a <explode_bomb>
+  40103a: ba 0e 00 00 00        mov    $0xe,%edx
+  40103f: be 00 00 00 00        mov    $0x0,%esi
+  401044: 8b 7c 24 08           mov    0x8(%rsp),%edi
+  401048: e8 81 ff ff ff        callq  400fce <func4>
+  40104d: 85 c0                 test   %eax,%eax
+  40104f: 75 07                 jne    401058 <phase_4+0x4c>
+  401051: 83 7c 24 0c 00        cmpl   $0x0,0xc(%rsp)
+  401056: 74 05                 je     40105d <phase_4+0x51>
+  401058: e8 dd 03 00 00        callq  40143a <explode_bomb>
+  40105d: 48 83 c4 18           add    $0x18,%rsp
+  401061: c3                    retq   
+```
+
+前面的部分跟phase_3几乎一样, 用sscanf读两个%d,没读到两个就直接爆炸, 把读到的第一个数与0x额比较,若大于等于就爆炸,大于就继续. 给rdx写入0xe, rsi写入0x0, rdi写入读入的第一个数(memory[rsp+0x8]), 执行一个意义不明的函数func4. 从func4返回后计算rax&rax,如果不是0就爆炸, 然后比较读入的第二个数与0, 如果相等就让返回,否则爆炸.
+
+至此我们可以判断出第二个数是0,第一个数需要让func4返回0.
+
+那现在来看一下func4
 
 ```
 0000000000400fce <func4>:
@@ -344,16 +398,6 @@ btw笑死我了2333
   40100b: c3                    retq   
 ```
 
-前面的部分跟phase_3几乎一样, 用sscanf读两个%d,没读到两个就直接爆炸, 把读到的第一个数与0x额比较,若大于等于就爆炸,大于就继续. 给rdx写入0xe, rsi写入0x0, rdi写入读入的第一个数(memory[rsp+0x8]), 执行一个意义不明的函数func4. 从func4返回后计算rax&rax,如果不是0就爆炸, 然后比较读入的第二个数与0, 如果相等就让返回,否则爆炸.
-
-至此我们可以判断出第二个数是0,第一个数需要让func4返回0.
-
-那现在来看一下func4
-
-```
-0000000000400fce <func4>:  400fce: 48 83 ec 08           sub    $0x8,%rsp  400fd2: 89 d0                 mov    %edx,%eax  400fd4: 29 f0                 sub    %esi,%eax  400fd6: 89 c1                 mov    %eax,%ecx  400fd8: c1 e9 1f              shr    $0x1f,%ecx  400fdb: 01 c8                 add    %ecx,%eax  400fdd: d1 f8                 sar    %eax  400fdf: 8d 0c 30              lea    (%rax,%rsi,1),%ecx  400fe2: 39 f9                 cmp    %edi,%ecx  400fe4: 7e 0c                 jle    400ff2 <func4+0x24>  400fe6: 8d 51 ff              lea    -0x1(%rcx),%edx  400fe9: e8 e0 ff ff ff        callq  400fce <func4>  400fee: 01 c0                 add    %eax,%eax  400ff0: eb 15                 jmp    401007 <func4+0x39>  400ff2: b8 00 00 00 00        mov    $0x0,%eax  400ff7: 39 f9                 cmp    %edi,%ecx  400ff9: 7d 0c                 jge    401007 <func4+0x39>  400ffb: 8d 71 01              lea    0x1(%rcx),%esi  400ffe: e8 cb ff ff ff        callq  400fce <func4>  401003: 8d 44 00 01           lea    0x1(%rax,%rax,1),%eax  401007: 48 83 c4 08           add    $0x8,%rsp  40100b: c3                    retq   
-```
-
 rax写入rdx的值(0xe),减去rsi的值(0x0),把rax值移入rcx, rcx的值右移0x1f位(?那不就是0吗), 然后加回rax上, rax再右移(7), rcx写入(rax+rsi)(7), 比较rdi(读入的第一个数)和rcx(7)的值,rcx<=rdi就跳到400ff2, 否则就让rdx = rcx-1,然后递归调用func4,回来之后rax*=2,跳到4001007(函数返回的地方).
 
 从400ff2开始看, 给rax写入0, 比较rcx与rdi, rcx>=rdi则跳到401007,否则rsi = rcx+1, 递归调用func4, 回来后rax = 2 * rax + 1, 然后返回函数.
@@ -372,6 +416,8 @@ Halfway there!
 7 0
 So you got that one.  Try this one.
 ```
+
+### phase_5
 
 ### phase_5
 
@@ -421,7 +467,7 @@ So you got that one.  Try this one.
 
 这里其实首先应该看看`rdi`里面是啥, 是输入的字符串保存的地址......
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=MjI1ZGRjODRkMTU5NDYwNmUyNzBiNDNiZGE0Y2Q0MDlfNTVCdHBZajVra0MxNWswM3pzQ0pnSmFxeklPSnByRXVfVG9rZW46Ym94Y250SW9zU3RsSUViSVRiWnJWWUcwTWg2XzE2MzIwMzYwMTA6MTYzMjAzOTYxMF9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=NGY4YzMwYzU1MTIwOTU2MWJiMWFiNmYyZjA2NzdkNDBfazY2STlLcDJ1ZUhUeVU4N1p4cm9VUjRZWWF4aDNTekpfVG9rZW46Ym94Y250SW9zU3RsSUViSVRiWnJWWUcwTWg2XzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
 %fs:0x28是啥呀......给rbx写入rdi,rax写入%fs:0x28, 给0x18(rsp)写入rax,然后rax做异或......,之后调用string_length,若返回值不等于6就爆炸,等于就跳到4010d2. 
 
@@ -432,8 +478,7 @@ So you got that one.  Try this one.
 让memory[rsp] = rcx的最低8位(第一个字符), 让rdx = memory[rsp], 然后edx与0xf作与操作(只剩下低四位了),然后让edx=memory[0x4024b0+rdx], 这里去看一下0x4042b0里面有什么好东西:
 
 ```
-(gdb) x/s 0x4024b0
-0x4024b0 <array.3449>:  "maduiersnfotvbylSo you think you can stop the bomb with ctrl-c, do you?"
+(gdb) x/s 0x4024b00x4024b0 <array.3449>:  "maduiersnfotvbylSo you think you can stop the bomb with ctrl-c, do you?"
 ```
 
 然后把rdx的最低8位()写入memory[0x10+rsp+rax], 然后rax+0x1, 比较rax与0x6,如果不相等就跳回到40108b,重复之前的操作.
@@ -448,13 +493,173 @@ So you got that one.  Try this one.
 
 看一下0x40245e这个地方是一个字符串"flyers".
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=ZTAxYTBlZjRjNjhmMWU3YzI2YTE2MzVhNzEzMDcwZDdfbk8zNm1rMkRXcWE3ZlhZNVRGY2hWbHFnZTJjUm9SaTBfVG9rZW46Ym94Y25qNVRqalRnSHdUNVBsdm1BR0N5dGhiXzE2MzIwMzYwMTA6MTYzMjAzOTYxMF9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=Njg0MjczMDFjMjVhYzk4ZTc1NmZlM2I2OWNmZjhkMGVfVmtyUFRBdnFMRzRDeWMyRFpUTWZnSkNtNXFOV3JLMlFfVG9rZW46Ym94Y25qNVRqalRnSHdUNVBsdm1BR0N5dGhiXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
 也就是说, 我们输入的字符串提供的是偏移量, 每个字符串的低四位要在0x4024b0里面找到"flyers".
 
 "flyers"对应的偏移量是`[9,15,14,5,6,7]`, 对应输入字符的低4位, 
 
 根据acsii表得到的答案是`[105,111,110,101,102,103]`,翻译成acsii码是`ionefg`
+
+### phase_6
+
+好长啊......
+
+```
+00000000004010f4 <phase_6>:
+  4010f4: 41 56                 push   %r14
+  4010f6: 41 55                 push   %r13
+  4010f8: 41 54                 push   %r12
+  4010fa: 55                    push   %rbp
+  4010fb: 53                    push   %rbx
+  4010fc: 48 83 ec 50           sub    $0x50,%rsp
+  401100: 49 89 e5              mov    %rsp,%r13
+  401103: 48 89 e6              mov    %rsp,%rsi
+  401106: e8 51 03 00 00        callq  40145c <read_six_numbers>
+  40110b: 49 89 e6              mov    %rsp,%r14
+  40110e: 41 bc 00 00 00 00     mov    $0x0,%r12d
+  401114: 4c 89 ed              mov    %r13,%rbp
+  401117: 41 8b 45 00           mov    0x0(%r13),%eax
+  40111b: 83 e8 01              sub    $0x1,%eax
+  40111e: 83 f8 05              cmp    $0x5,%eax
+  401121: 76 05                 jbe    401128 <phase_6+0x34>
+  401123: e8 12 03 00 00        callq  40143a <explode_bomb>
+  401128: 41 83 c4 01           add    $0x1,%r12d
+  40112c: 41 83 fc 06           cmp    $0x6,%r12d
+  401130: 74 21                 je     401153 <phase_6+0x5f>
+  401132: 44 89 e3              mov    %r12d,%ebx
+  401135: 48 63 c3              movslq %ebx,%rax
+  401138: 8b 04 84              mov    (%rsp,%rax,4),%eax
+  40113b: 39 45 00              cmp    %eax,0x0(%rbp)
+  40113e: 75 05                 jne    401145 <phase_6+0x51>
+  401140: e8 f5 02 00 00        callq  40143a <explode_bomb>
+  401145: 83 c3 01              add    $0x1,%ebx
+  401148: 83 fb 05              cmp    $0x5,%ebx
+  40114b: 7e e8                 jle    401135 <phase_6+0x41>
+  40114d: 49 83 c5 04           add    $0x4,%r13
+  401151: eb c1                 jmp    401114 <phase_6+0x20>
+  401153: 48 8d 74 24 18        lea    0x18(%rsp),%rsi
+  401158: 4c 89 f0              mov    %r14,%rax
+  40115b: b9 07 00 00 00        mov    $0x7,%ecx
+  401160: 89 ca                 mov    %ecx,%edx
+  401162: 2b 10                 sub    (%rax),%edx
+  401164: 89 10                 mov    %edx,(%rax)
+  401166: 48 83 c0 04           add    $0x4,%rax
+  40116a: 48 39 f0              cmp    %rsi,%rax
+  40116d: 75 f1                 jne    401160 <phase_6+0x6c>
+  40116f: be 00 00 00 00        mov    $0x0,%esi
+  401174: eb 21                 jmp    401197 <phase_6+0xa3>
+  401176: 48 8b 52 08           mov    0x8(%rdx),%rdx
+  40117a: 83 c0 01              add    $0x1,%eax
+  40117d: 39 c8                 cmp    %ecx,%eax
+  40117f: 75 f5                 jne    401176 <phase_6+0x82>
+  401181: eb 05                 jmp    401188 <phase_6+0x94>
+  401183: ba d0 32 60 00        mov    $0x6032d0,%edx
+  401188: 48 89 54 74 20        mov    %rdx,0x20(%rsp,%rsi,2)
+  40118d: 48 83 c6 04           add    $0x4,%rsi
+  401191: 48 83 fe 18           cmp    $0x18,%rsi
+  401195: 74 14                 je     4011ab <phase_6+0xb7>
+  401197: 8b 0c 34              mov    (%rsp,%rsi,1),%ecx
+  40119a: 83 f9 01              cmp    $0x1,%ecx
+  40119d: 7e e4                 jle    401183 <phase_6+0x8f>
+  40119f: b8 01 00 00 00        mov    $0x1,%eax
+  4011a4: ba d0 32 60 00        mov    $0x6032d0,%edx
+  4011a9: eb cb                 jmp    401176 <phase_6+0x82>
+  4011ab: 48 8b 5c 24 20        mov    0x20(%rsp),%rbx
+  4011b0: 48 8d 44 24 28        lea    0x28(%rsp),%rax
+  4011b5: 48 8d 74 24 50        lea    0x50(%rsp),%rsi
+  4011ba: 48 89 d9              mov    %rbx,%rcx
+  4011bd: 48 8b 10              mov    (%rax),%rdx
+  4011c0: 48 89 51 08           mov    %rdx,0x8(%rcx)
+  4011c4: 48 83 c0 08           add    $0x8,%rax
+  4011c8: 48 39 f0              cmp    %rsi,%rax
+  4011cb: 74 05                 je     4011d2 <phase_6+0xde>
+  4011cd: 48 89 d1              mov    %rdx,%rcx
+  4011d0: eb eb                 jmp    4011bd <phase_6+0xc9>
+  4011d2: 48 c7 42 08 00 00 00  movq   $0x0,0x8(%rdx)
+  4011d9: 00 
+  4011da: bd 05 00 00 00        mov    $0x5,%ebp
+  4011df: 48 8b 43 08           mov    0x8(%rbx),%rax
+  4011e3: 8b 00                 mov    (%rax),%eax
+  4011e5: 39 03                 cmp    %eax,(%rbx)
+  4011e7: 7d 05                 jge    4011ee <phase_6+0xfa>
+  4011e9: e8 4c 02 00 00        callq  40143a <explode_bomb>
+  4011ee: 48 8b 5b 08           mov    0x8(%rbx),%rbx
+  4011f2: 83 ed 01              sub    $0x1,%ebp
+  4011f5: 75 e8                 jne    4011df <phase_6+0xeb>
+  4011f7: 48 83 c4 50           add    $0x50,%rsp
+  4011fb: 5b                    pop    %rbx
+  4011fc: 5d                    pop    %rbp
+  4011fd: 41 5c                 pop    %r12
+  4011ff: 41 5d                 pop    %r13
+  401201: 41 5e                 pop    %r14
+  401203: c3                    retq   
+```
+
+让r13 = rsp, rsi = rsp, 执行`read_six_numbers`函数, 读入的6个数字应该是在`rsp+0`到`rsp+0x14`上.让r14 = rsp, 让r12d(r12的低32位) = 0x0.
+
+下面的部分大概能看出来是在循环.
+
+(这里是401114)让rbp=r13, 让eax = memory[r13], eax -= 0x1, 比较eax和0x5, 如果大于就爆炸(说明读入的数必须小于等于6, **而且还不能是0** , 这一点我"初见"的时候漏了......因为0-1 = -1(signed) = 一个很大的unsigned, 这里的比较是在unsigned的比较环境下的......). 
+
+让r12d += 1, 比较r12d和0x6, 如果相等则跳转到401153, 否则让ebx = r12d, **(这里是401135)让rax = ebx, 让eax = memory[rsp+4\*rax](这里应该能看出来是读入的第rax个,也就是r12d个数), 然后比较eax和memory[rbp],如果相等的话爆炸(真是奇妙), 不相等的话继续让ebx+=1, 比较ebx和0x5, 如果小于等于就跳转回401135**,否则就让r13+=0x4,跳转到401114.
+
+ 这一段循环看似很绕, 其实很简单......首先标黑体的是一个循环, 可以看做一个操作整体, 这样便于查看大的循环.这里大的循环的索引是`r13`或者`r12d`, 小的循环的索引就是`ebx`, 目的是确保每个元素不相等,相当于下面的循环:
+
+```
+for(int i = 0; i < 6; i++){
+    if((signed)nums[i] - 1> 5) explode_bomb(); 
+    for(int j = i + 1; i < 6; j++){
+        if(nums[i] == nums[j]) explode_bomb();   
+    }
+}
+```
+
+也就是说每个元素不相等然后每个元素都要小于等于6, 注意到还是用的unsigned的比较指令, 所以输入的数一定属于`1,2,3,4,5,6`
+
+
+
+现在从401153开始看,令rsi=0x18+rsp,  让rax=r14(初始值是rsp),  让ecx等于立即数0x7,让edx等于ecx, 然后edx-=memory[rax],然后让memory[rax] = edx, 然后让rax+=0x4, 比较rax与rsi, 不相等就跳转到501160.
+
+这一段很明显,让所有的读入的数num = 0x7 - num. 
+
+
+
+现在从40116f开始看, 让esi=0x0, 跳转到401197, 让ecx=memory[rsp+rsi](处理后的第rsi/4个数),比较ecx与立即数0x1, 若小于等于则跳到401183,否则让rax = 0x1, 让edx=0x6032d0, 跳到401176(也就是刚才跳到401197的下一步).让rdx = memory[0x8+rdx], 让eax+=0x1, 比较ecx与eax, 不相等的话跳到401176, 否则跳到401188.
+
+也就是说无论这里的`ecx`(也就是经过之前的处理的第e]rsi/4个数)是多少,都要跳转到401188, 唯一的区别是rdx的值是多少, 若`ecx`小于等于1那么`rdx`,否则rdx会迭代, 2对应rdx的值是0x6032e0, 3对应0x6032f0...一直到6对应0x603320.
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=MWE3OWRmZDUyZDlkOGZkODk2MDhiYmU5ZjNmOGE1MWJfMXh5MnA5R3g4Z3ppQVFqODVGVm5wckhCRjF4U2pVUFJfVG9rZW46Ym94Y25Zc2hEM2E5MW1lUXpGMlNPbWRiSEdYXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
+
+那么401183是啥呢, 让edx=0x6032d0 ,401188是啥呢, 让memory[0x20+rsp+2*rsi] = rdx, 让rsi+=4, 比较rsi与0x18, 若相等则跳到4011ab,否则让ecx=memory[rsp+rsi], 比较ecx与0x1, 若小于等于则跳到401183, 否则让eax = 0x1, 让edx = 0x6032d0, 跳到401176去.......
+
+这里就是把每个数对应节点的地址放在了rsp+0x20这里...
+
+
+
+从4011ab开始看, **让**`**rbx**`**=memory[0x20+rsp]**, 让`rax`=rsp+0x28, 让`rsi`=rsp+0x50, 让`rcx`=`rbx`, (这里是4011bd)让`rdx`=memory[rax], 让memory[0x8+rcx] = rdx, 让rax+=0x8, 比较rax和rsi, 如果相等则跳到4011d2, 否则让rcx = rdx, 跳转到4011bd.
+
+所以说这里是遍历了上一步里栈上从0x20+rsp开始的空间(遍历了1-5, 没有6), 记为`b[1]`, `b[2]`啥的话, 比如遍历到`b[i]`, 就去把`memory[b[i-1]+0x8]`改写成`b[i]`......
+
+这里其实类似双指针遍历链表...然后这里这个结构其实就是个链表.`0x8`是`node`节点对于`next`指针的偏移量. 最后的结果就是把原来的链表按照目前rsp+0x20这里的顺序重新排列了.
+
+
+
+从4011d2开始看, 让memory[rdx+0x8] = 0x0(也就是`memory[b[6]+0x8]`, 相当于尾结点`next`指针置`null`), 这个时候0x6032d0的链表已经重新排序了, 让`ebp` = 0x5, (这里是4011df)让rax = memory[rbx+0x8](也就是链表中下一个node的地址),让eax = memory[rax](也就是链表中下一个node的值), 比较eax和memory[rbx](也就是目前的node的值), 若小于则爆炸, 否则就让rbx = memory[rbx+0x8], 让ebp-=1, 若`ebp!=0`则跳回4011df, 否则就返回函数(也就意味着炸弹解除).
+
+也就是说这里是要求对于栈上从0x20+rsp开始的`b[1], b2[2], b[3]...b[5]`, `memory[memory[b[i]+0x8]] <= memory[b[i]]`. 根据上一步的变换我们可以知道在0x6032d0那里的情况是`memory[b[i]+0x8] = b[i+1]`. 所以这里的条件等价于`memory[b[i+1]]<=memory[b[i]]`. 更进一步, 就是让排序后的链表递减.
+
+
+
+再去看一下0x6032d0的排布,我们可以知道内部的构造是这样的, 每个"单元"占了2*8个字节, 第二个8个字节是下一步的地址, 第一个是我们用来比较的对象,可以看到其值分别为`0x14c, 0xa8, 0x39c, 0x2b3, 0x1dd, 0x1bb`,要保证它们是递减的的排布序列`b`应该是`3,4,5,6,1,2`, 对应的输入字符就是`4 3 2 1 6 5`
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=ZjhjNTBmOTA5MTNiZTkxNjFmYTliOGZjNmZhNDQ2YTRfTGpPU2Q1d3JGRG51Q0liZE1qc0ZCR2ljeGR1SzJQVzJfVG9rZW46Ym94Y25nQ3l0b0daTEhTZVFMWXI2Wkl3VEhoXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=NzM0NDQ1YTRmMjY0ZjZiNzNmYTU5YmI0ZmZjMmI5MjJfcG1ocDZ4UFRYekZJSWNDWGNqa3J0Q2pBYkRNeUNpS3hfVG9rZW46Ym94Y25FQTAySTVncDFZanVaQXNYZVZ5aTBnXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=YmUwOGQ0ZTNiZjE0ZmY5OGI2NzczN2I0YWQwMzIwZmFfSGlkdjBYV0xybDhmQzBXRjhKeWNCVURxY2laWHhObndfVG9rZW46Ym94Y25tcFRmWEVIUnRPRXVEZmJINkFBaFFQXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
+
+
 
 ### Answer
 
@@ -471,4 +676,7 @@ Halfway1 there!
 So you got that one.  Try this one.
 ionefg
 Good work!  On to the next...
+4 3 2 1 6 5
+Congratulations! You've defused the bomb!
+[Inferior 1 (process 22384) exited normally]
 ```
