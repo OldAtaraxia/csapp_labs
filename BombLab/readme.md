@@ -657,6 +657,187 @@ for(int i = 0; i < 6; i++){
 
 ![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=YmUwOGQ0ZTNiZjE0ZmY5OGI2NzczN2I0YWQwMzIwZmFfSGlkdjBYV0xybDhmQzBXRjhKeWNCVURxY2laWHhObndfVG9rZW46Ym94Y25tcFRmWEVIUnRPRXVEZmJINkFBaFFQXzE2MzIyOTUyMDU6MTYzMjI5ODgwNV9WNA)
 
+### secret_phase
+
+明眼人一眼就发现了这里还有个secret_phase
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=MWIwYTI4OTFkYWMyMTA5OWFhYTExZDdmNWNiZjVkYzJfelp1a2NRMkNFbW9LbGF0b3Y3OGFBaGQyR2ZKVHdtMnRfVG9rZW46Ym94Y25hR3RMcDJMRDR4TlJoZEtHNG10T3p5XzE2MzIzMjE4Mzk6MTYzMjMyNTQzOV9WNA)
+
+#### 如何进入secret_phase
+
+可能调用secret_phase的只有`phase_defused`, 这个函数是每一个`phase`之后都会调用的
+
+```
+00000000004015c4 <phase_defused>:
+  4015c4:   48 83 ec 78             sub    $0x78,%rsp
+  4015c8:   64 48 8b 04 25 28 00    mov    %fs:0x28,%rax
+  4015cf:   00 00 
+  4015d1:   48 89 44 24 68          mov    %rax,0x68(%rsp)
+  4015d6:   31 c0                   xor    %eax,%eax
+  4015d8:   83 3d 81 21 20 00 06    cmpl   $0x6,0x202181(%rip)        # 603760 <num_input_strings>
+  4015df:   75 5e                   jne    40163f <phase_defused+0x7b>
+  4015e1:   4c 8d 44 24 10          lea    0x10(%rsp),%r8
+  4015e6:   48 8d 4c 24 0c          lea    0xc(%rsp),%rcx
+  4015eb:   48 8d 54 24 08          lea    0x8(%rsp),%rdx
+  4015f0:   be 19 26 40 00          mov    $0x402619,%esi
+  4015f5:   bf 70 38 60 00          mov    $0x603870,%edi
+  4015fa:   e8 f1 f5 ff ff          callq  400bf0 <__isoc99_sscanf@plt>
+  4015ff:   83 f8 03                cmp    $0x3,%eax
+  401602:   75 31                   jne    401635 <phase_defused+0x71>
+  401604:   be 22 26 40 00          mov    $0x402622,%esi
+  401609:   48 8d 7c 24 10          lea    0x10(%rsp),%rdi
+  40160e:   e8 25 fd ff ff          callq  401338 <strings_not_equal>
+  401613:   85 c0                   test   %eax,%eax
+  401615:   75 1e                   jne    401635 <phase_defused+0x71>
+  401617:   bf f8 24 40 00          mov    $0x4024f8,%edi
+  40161c:   e8 ef f4 ff ff          callq  400b10 <puts@plt>
+  401621:   bf 20 25 40 00          mov    $0x402520,%edi
+  401626:   e8 e5 f4 ff ff          callq  400b10 <puts@plt>
+  40162b:   b8 00 00 00 00          mov    $0x0,%eax
+  401630:   e8 0d fc ff ff          callq  401242 <secret_phase>
+  401635:   bf 58 25 40 00          mov    $0x402558,%edi
+  40163a:   e8 d1 f4 ff ff          callq  400b10 <puts@plt>
+  40163f:   48 8b 44 24 68          mov    0x68(%rsp),%rax
+  401644:   64 48 33 04 25 28 00    xor    %fs:0x28,%rax
+  40164b:   00 00 
+  40164d:   74 05                   je     401654 <phase_defused+0x90>
+  40164f:   e8 dc f4 ff ff          callq  400b30 <__stack_chk_fail@plt>
+  401654:   48 83 c4 78             add    $0x78,%rsp
+  401658:   c3                      retq   
+  401659:   90                      nop
+  40165a:   90                      nop
+  40165b:   90                      nop
+  40165c:   90                      nop
+  40165d:   90                      nop
+  40165e:   90                      nop
+  40165f:   90                      nop
+```
+
+让`rax` = `%fs:0x28`, 让`memory[rsp+0x68]` = rax, (金丝雀), eax与自己作异或, 比较memory[rip+0x202181]与0x6比较(这里有注释`# 603760 <num_input_string`, 也就是输入的字符串的数量), 若不相等则跳转到40163f. 在这里函数经过金丝雀验证后直接返回了.......所以只有phase_6后面的phase_defaused才能执行后面的过程.
+
+从4015e1谈起, 令r8 = rsp+0x10, 令rcx=rsp+0xc, 令rdx=rsp+0x8, 让esi = $0x402619, edi = $0x603870, 显然些值都是要作为函数的参数进行传递的. 接着执行了`sscanf`, 然后比较eax与立即数0x3, 若不相等就跳到401635, 这里是打印"Congratulations! You've defused the bomb!"然后返回函数.
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=NmIxYjczMTM3YjQ0YjQ0MTgwOTY1NmE1MTFmMzBhMWJfNEpyMGlMNFVvaU91MVNjbXpITWZrWFkxSXJvYUYzeGJfVG9rZW46Ym94Y241MzFiWVY1TExka2gya3VmYnNqbmViXzE2MzIzMjE4Mzk6MTYzMjMyNTQzOV9WNA)
+
+经过在`gdb`里的追踪发现0x603870是phase_4的输入的字符串的地址.
+
+```
+Welcome to my fiendish little bomb. You have 6 phases with
+which to blow yourself up. Have a nice day!
+Border relations with Canada have never been better.
+Phase 1 defused. How about the next one?
+1 2 4 8 16 32
+That's number 2.  Keep going!
+1 311
+Halfway there!
+7 0 DrEvil
+So you got that one.  Try this one.
+ionefg
+Good work!  On to the next...
+4 3 2 1 6 5
+Curses, you've found the secret phase!
+But finding it and solving it are quite different...
+```
+
+接下来就是让`esi` = 0x402622, 让rdi = memory[rsp+0x10], 执行`string_not_equal`
+
+0x402622处的字符串是"DrEvil", 若结果不符合就跳到401635去返回函数, 符合则继续执行, 让edi = 0x4024f8, 执行`puts`函数, 可以看到哪里的字符串是 "Curses, you've found the secret phase!". 让eax = 0x0, 执行`secret_phase`
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=NDMyMzcyZDgwM2U0YjkwZTg1OWY0ODM0ZTc5OWFkYmNfTm5EV2haUFdkVDZyeTBJOHBkY1hwTXhaSFpHSFpLcW5fVG9rZW46Ym94Y25RVThPQ1FuVjNiTUFoOXJoM214QlRlXzE2MzIzMjE4Mzk6MTYzMjMyNTQzOV9WNA)
+
+#### Solve the problem
+
+```
+0000000000401242 <secret_phase>:
+  401242: 53                    push   %rbx
+  401243: e8 56 02 00 00        callq  40149e <read_line>
+  401248: ba 0a 00 00 00        mov    $0xa,%edx
+  40124d: be 00 00 00 00        mov    $0x0,%esi
+  401252: 48 89 c7              mov    %rax,%rdi
+  401255: e8 76 f9 ff ff        callq  400bd0 <strtol@plt>
+  40125a: 48 89 c3              mov    %rax,%rbx
+  40125d: 8d 40 ff              lea    -0x1(%rax),%eax
+  401260: 3d e8 03 00 00        cmp    $0x3e8,%eax
+  401265: 76 05                 jbe    40126c <secret_phase+0x2a>
+  401267: e8 ce 01 00 00        callq  40143a <explode_bomb>
+  40126c: 89 de                 mov    %ebx,%esi
+  40126e: bf f0 30 60 00        mov    $0x6030f0,%edi
+  401273: e8 8c ff ff ff        callq  401204 <fun7>
+  401278: 83 f8 02              cmp    $0x2,%eax
+  40127b: 74 05                 je     401282 <secret_phase+0x40>
+  40127d: e8 b8 01 00 00        callq  40143a <explode_bomb>
+  401282: bf 38 24 40 00        mov    $0x402438,%edi
+  401287: e8 84 f8 ff ff        callq  400b10 <puts@plt>
+  40128c: e8 33 03 00 00        callq  4015c4 <phase_defused>
+  401291: 5b                    pop    %rbx
+  401292: c3                    retq   
+  401293: 90                    nop
+  401294: 90                    nop
+  401295: 90                    nop
+  401296: 90                    nop
+  401297: 90                    nop
+  401298: 90                    nop
+  401299: 90                    nop
+  40129a: 90                    nop
+  40129b: 90                    nop
+  40129c: 90                    nop
+  40129d: 90                    nop
+  40129e: 90                    nop
+  40129f: 90                    nop
+```
+
+执行了`read_line`操作, 显然读入字符串的地址是存在`rax`中的.
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=MWI0YWQ1ZjRiZGZkNzM0NWM5MGQ1MzJjOGVjZjQzNDJfQkhKbHYxVERBSmJjZFRuMUFIbDlwYlRROVNZM1d6OXVfVG9rZW46Ym94Y25iQmtXTm1MMUhIT01JNzJUMUJ0Z0hmXzE2MzIzMjE4Mzk6MTYzMjMyNTQzOV9WNA)
+
+让edx = 0xa, 让esi = 0x0, 让rdi = rax, 执行函数`strtol`, 也就是把c风格的字符串转化成`long`. 让rbx = rax(也就是`strtol`的结果), 让eax = rax-0x1, 比较eax和0x3e8, 如果大于则爆炸, 否则就让esi = ebx, 让edi = 0x603f0, 执行`fun7`, 比较返回值与2, 如果不相等就爆炸,否则就返回.
+
+这时候函数参数的情况: esi是ebx, 也就是执行strtol的返回值. edi是0x6030f0,可以去看一下
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=YmYwMjA4NWUwZmQ3YzhjMzNiMmM4M2EzNWI1NGNjM2ZfWktVSUsySWVjaUlyNXVhbEJ0ZEFsajI0OGoxdXNvVVhfVG9rZW46Ym94Y25jNmdRQUhWN0dJVlBJT3BGeVVQRjBwXzE2MzIzMjE4Mzk6MTYzMjMyNTQzOV9WNA)
+
+因此我们来看这个意义不明的`fun7`
+
+```
+0000000000401204 <fun7>:
+  401204: 48 83 ec 08           sub    $0x8,%rsp
+  401208: 48 85 ff              test   %rdi,%rdi
+  40120b: 74 2b                 je     401238 <fun7+0x34>
+  40120d: 8b 17                 mov    (%rdi),%edx
+  40120f: 39 f2                 cmp    %esi,%edx
+  401211: 7e 0d                 jle    401220 <fun7+0x1c>
+  401213: 48 8b 7f 08           mov    0x8(%rdi),%rdi
+  401217: e8 e8 ff ff ff        callq  401204 <fun7>
+  40121c: 01 c0                 add    %eax,%eax
+  40121e: eb 1d                 jmp    40123d <fun7+0x39>
+  401220: b8 00 00 00 00        mov    $0x0,%eax
+  401225: 39 f2                 cmp    %esi,%edx
+  401227: 74 14                 je     40123d <fun7+0x39>
+  401229: 48 8b 7f 10           mov    0x10(%rdi),%rdi
+  40122d: e8 d2 ff ff ff        callq  401204 <fun7>
+  401232: 8d 44 00 01           lea    0x1(%rax,%rax,1),%eax
+  401236: eb 05                 jmp    40123d <fun7+0x39>
+  401238: b8 ff ff ff ff        mov    $0xffffffff,%eax
+  40123d: 48 83 c4 08           add    $0x8,%rsp
+  401241: c3                    retq   
+```
+
+若rdi = 0则跳转到401238, 在那里让eax = 0xffffffff然后返回函数, 显然返回值不等于2, 不符合要求.
+
+回到40120d, 让edx = memory[rdi], 比较edx与esi, 若小于等于则跳转到401220, 否则让rdi = memory[rdi + 0x8], 然后递归调用`fun7`.返回后让eax += eax, 跳到40123d(函数返回的地方).
+
+再从401220开始看. 让eax = 0, 比较edx与esi, 若相等则跳到40123d(函数返回的位置), 否则让rdi = memory[rdi+0x10], 递归调用`fun7`, 返回后让eax = 0x1 + 2 * eax, 跳转到40123d.
+
+也就是说这个函数做的事: 比较esi与memory[rdi]:
+
+- 大于: rdi = memory[rdi+0x8]. 递归调用fun7, 返回值*2返回回去
+- 等于: 直接返回0
+- 小于: rdi = memory[rdi+0x10], 递归调用fun7, 返回值*2+1返回回去
+
+是不是像二叉树中找元素......我又去看了下内存才意识到就是二叉树.每个节点分别保存着值, 指向左右孩子节点的指针.每个节点占0x20空间.前三个0x8的空间分别存着node值, 左孩子与右孩子的指针, 然后剩下的一块应该是对齐用的
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=ZjgwNTQ4ZDYzODVmMDIxMzE1N2U5ZDg0NzEzNzBjYTFfZW9qM3RndTFDS052eEtuRDUxUXN5TXA3YzFEUWV5R1pfVG9rZW46Ym94Y25Cd20wT0gzSlhpc2t2VlZpckdNNWtjXzE2MzIzMjE4Mzk6MTYzMjMyNTQzOV9WNA)
+
 
 
 ### Answer
