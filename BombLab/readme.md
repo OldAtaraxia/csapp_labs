@@ -836,7 +836,15 @@ But finding it and solving it are quite different...
 
 是不是像二叉树中找元素......我又去看了下内存才意识到就是二叉树.每个节点分别保存着值, 指向左右孩子节点的指针.每个节点占0x20空间.前三个0x8的空间分别存着node值, 左孩子与右孩子的指针, 然后剩下的一块应该是对齐用的
 
-![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=ZjgwNTQ4ZDYzODVmMDIxMzE1N2U5ZDg0NzEzNzBjYTFfZW9qM3RndTFDS052eEtuRDUxUXN5TXA3YzFEUWV5R1pfVG9rZW46Ym94Y25Cd20wT0gzSlhpc2t2VlZpckdNNWtjXzE2MzIzMjE4Mzk6MTYzMjMyNTQzOV9WNA)
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=MWZiYWEyOTI2YzRhYWYwNjY0ZmI2N2I1ZGYzZGI4YzJfVDZGZG9ISklEVVlYODY2czZwaTVhWXpZQnNObVlnQkdfVG9rZW46Ym94Y250cmtabEc3UFdVb1BWUHZsakhUaTZmXzE2MzIzNjEzMzc6MTYzMjM2NDkzN19WNA)
+
+![img](https://mf3qv90vh2.feishu.cn/space/api/box/stream/download/asynccode/?code=N2VmMzBhNzA4ZTQ1ZjNhMTU5M2QyYjYxM2NkZDgwZDJfZmtXV1hnQUpHcVJiM0lNQjZFUmtWQ1l0UDRWYVdmeFlfVG9rZW46Ym94Y25xOFowQ2FZZThobjg1THVaVDQyUlBkXzE2MzIzNjEzMzc6MTYzMjM2NDkzN19WNA)
+
+返回值是2应该满足比根节点小,比第二个节点大,与第三个节点相等, 因此22满足条件
+
+
+
+
 
 
 
@@ -850,12 +858,15 @@ Phase 1 defused. How about the next one?
 1 2 4 8 16 32
 That's number 2.  Keep going!
 1 311
-Halfway1 there!
-7 0
+Halfway there!
+7 0 DrEvil
 So you got that one.  Try this one.
 ionefg
 Good work!  On to the next...
 4 3 2 1 6 5
+Curses, you've found the secret phase!
+But finding it and solving it are quite different...
+22
+Wow! You've defused the secret stage!
 Congratulations! You've defused the bomb!
-[Inferior 1 (process 22384) exited normally]
 ```

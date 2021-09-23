@@ -619,6 +619,7 @@ Disassembly of section .text:
   40123d:	48 83 c4 08          	add    $0x8,%rsp
   401241:	c3                   	retq   
 
+// there
 0000000000401242 <secret_phase>:
   401242:	53                   	push   %rbx
   401243:	e8 56 02 00 00       	callq  40149e <read_line>
