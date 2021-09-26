@@ -1,4 +1,4 @@
-Cache lab
+# Cache lab
 
 缓存未命中的情况:
 
