@@ -31,7 +31,7 @@ make
 - 假设所有内存都已经对齐了, 所有的请求都不可能穿过块的边界, 所以可以忽略traces文件中的大小属性
 
 我的代码实现
-```
+```C
 #include "cachelab.h"
 #include <unistd.h>
 #include <getopt.h>
