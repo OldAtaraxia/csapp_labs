@@ -165,6 +165,32 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    char** argv = malloc(sizeof(char*) * MAXARGS); /* argv array */
+    char* buf;
+    int bg; 
+    sigset_t mask; prev;
+
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGCHLD);
+
+    strcpy(buf, cmdline);
+    bg = parseline(buf, argv);
+    if(argv[0] == NULL) return; /* 忽略空行 */
+    sigprocmask(SIG_BLOCK, &mask, &prev);
+    if(!builtin_command(argv)) {
+        if((pid = fork()) == 0) {
+            /* 子进程 */
+            if(execve(argv[0], argv, NULL) < 0) {
+                printf("%s: Command not found\n", argv[0]);
+                exit(0);
+            }
+        }
+        /* 父进程 */
+        addjob(jobs, pid, bg ? BG : FG, cmdline);
+        if(!bg) {
+            waitfg(pid);
+        }
+    }
     return;
 }
 
@@ -191,27 +217,27 @@ int parseline(const char *cmdline, char **argv)
     /* Build the argv list */
     argc = 0;
     if (*buf == '\'') {
-	buf++;
-	delim = strchr(buf, '\'');
+	    buf++;
+	    delim = strchr(buf, '\'');
     }
     else {
-	delim = strchr(buf, ' ');
+	    delim = strchr(buf, ' ');
     }
 
     while (delim) {
-	argv[argc++] = buf;
-	*delim = '\0';
-	buf = delim + 1;
-	while (*buf && (*buf == ' ')) /* ignore spaces */
-	       buf++;
+        argv[argc++] = buf; /* 也就是说argv其实是指向了buff...然后buff反正在每次命令执行时是不会被覆盖的 */
+        *delim = '\0'; 
+        buf = delim + 1;
+        while (*buf && (*buf == ' ')) /* ignore spaces */
+            buf++;
 
-	if (*buf == '\'') {
-	    buf++;
-	    delim = strchr(buf, '\'');
-	}
-	else {
-	    delim = strchr(buf, ' ');
-	}
+        if (*buf == '\'') {
+            buf++;
+            delim = strchr(buf, '\'');
+        }
+        else {
+            delim = strchr(buf, ' ');
+        }
     }
     argv[argc] = NULL;
     
@@ -220,7 +246,7 @@ int parseline(const char *cmdline, char **argv)
 
     /* should the job run in the background? */
     if ((bg = (*argv[argc-1] == '&')) != 0) {
-	argv[--argc] = NULL;
+	    argv[--argc] = NULL;
     }
     return bg;
 }
@@ -231,6 +257,15 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
+    if(strcmp(argv[0], "quit")) {
+        /* do the quit things */
+    }else if(strcmp(argv[0], "bg")) {
+        /* do the bg things*/
+    }else if(strcmp(argv[0], "fg")) {
+        /* do the fg things */
+    }else if(strcmp(argv[0], "jobs")) {
+        /* do the job things */
+    }
     return 0;     /* not a builtin command */
 }
 
