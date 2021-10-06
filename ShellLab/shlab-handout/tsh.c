@@ -131,22 +131,22 @@ int main(int argc, char **argv)
     /* Execute the shell's read/eval loop */
     while (1) {
 
-	/* Read command line */
-	if (emit_prompt) {
-	    printf("%s", prompt);
-	    fflush(stdout);
-	}
-	if ((fgets(cmdline, MAXLINE, stdin) == NULL) && ferror(stdin))
-	    app_error("fgets error");
-	if (feof(stdin)) { /* End of file (ctrl-d) */
-	    fflush(stdout);
-	    exit(0);
-	}
+        /* Read command line */
+        if (emit_prompt) {
+            printf("%s", prompt);
+            fflush(stdout);
+        }
+        if ((fgets(cmdline, MAXLINE, stdin) == NULL) && ferror(stdin))
+            app_error("fgets error");
+        if (feof(stdin)) { /* End of file (ctrl-d) */
+            fflush(stdout);
+            exit(0);
+        }
 
-	/* Evaluate the command line */
-	eval(cmdline);
-	fflush(stdout);
-	fflush(stdout);
+        /* Evaluate the command line */
+        eval(cmdline);
+        fflush(stdout);
+        fflush(stdout);
     } 
 
     exit(0); /* control never reaches here */
@@ -177,8 +177,8 @@ void eval(char *cmdline)
     strcpy(buf, cmdline);
     bg = parseline(buf, argv);
     if(argv[0] == NULL) return; /* 忽略空行 */
-    sigprocmask(SIG_BLOCK, &mask, &prev);
     if(!builtin_cmd(argv)) {
+        sigprocmask(SIG_BLOCK, &mask, &prev);
         if((pid = fork()) == 0) {
             /* 子进程 */
             setpgid(0, 0);
@@ -270,6 +270,7 @@ int builtin_cmd(char **argv)
         /* do the fg things */
     }else if(!strcmp(argv[0], "jobs")) {
         listjobs(jobs);
+        return 1;
     }
     return 0;     /* not a builtin command */
 }
