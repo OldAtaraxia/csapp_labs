@@ -105,6 +105,7 @@ int main(int argc, char **argv)
             usage();
 	    break;
         case 'v':             /* emit additional diagnostic info */
+
             verbose = 1;
 	    break;
         case 'p':             /* don't print a prompt */
@@ -189,11 +190,13 @@ void eval(char *cmdline)
             }
         }
         /* 父进程 */
-        sigprocmask(SIG_SETMASK, &mask, NULL);
+        sigprocmask(SIG_BLOCK, &mask_all, NULL);
         addjob(jobs, pid, bg ? BG : FG, cmdline);
         sigprocmask(SIG_SETMASK, &prev, NULL);
         if(!bg) {
             waitfg(pid);
+        }else {
+            printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
         }
     }
     return;
@@ -265,9 +268,11 @@ int builtin_cmd(char **argv)
     if(!strcmp(argv[0], "quit")) {
         exit(0);
     }else if(!strcmp(argv[0], "bg")) {
-        /* do the bg things*/
+        do_bgfg(argv);
+        return 1;
     }else if(!strcmp(argv[0], "fg")) {
-        /* do the fg things */
+        do_bgfg(argv);
+        return 1;
     }else if(!strcmp(argv[0], "jobs")) {
         listjobs(jobs);
         return 1;
@@ -280,6 +285,40 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv) 
 {
+    int pid = -1, jid = -1;
+    sigset_t mask_all, prev;
+
+    sigfillset(&mask_all);
+    if(argv[1][0] == '%') {
+        jid = 0;
+        char* ctr = argv[1];
+        ctr++;
+        while((*ctr) != '\0') {
+            jid *= 10;
+            jid += (*ctr) - '0';
+            ctr++;
+        }
+    }else{
+        pid = 0;
+        char* ctr = argv[1];
+        while((*ctr) != '\0') {
+            pid *= 10;
+            pid += (*ctr) - '0';
+            ctr++;
+        }
+    }
+    if(pid == -1) pid = getjobjid(jobs, jid)->pid;
+    struct job_t* job_ptr = getjobpid(jobs, pid);
+    if(!strcmp(argv[0], "bg")) {
+        kill(-pid, 18);
+        printf("[%d] (%d) %s", pid2jid(pid), pid, job_ptr->cmdline);
+    }else {
+        sigprocmask(SIG_BLOCK, &mask_all, &prev);
+        job_ptr->state = FG;
+        sigprocmask(SIG_SETMASK, &prev, NULL);
+        kill(-pid, 18);
+        waitfg(pid);
+    }
     return;
 }
 
@@ -288,11 +327,8 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-    sigset_t mask_all;
-    sigfillset(&mask_all);
-
     while(pid == fgpid(jobs)) {
-        sleep(1);
+        sleep(0.5);
     }
     if(verbose) printf("waitfg: Process (%d) no longer the fg process\n", pid);
     return;
@@ -312,21 +348,33 @@ void waitfg(pid_t pid)
 void sigchld_handler(int sig) 
 {
     int olderrno = errno, jid;
+    int status; // 记录waitpid的状态
     sigset_t mask_all, prev_all;
     pid_t pid;
 
     if(verbose) printf("sigchld_handler: entering\n");
     sigfillset(&mask_all);
-    while((pid = waitpid(-1, NULL, 0)) > 0) {
-        sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {
         jid = pid2jid(pid);
-        if(verbose) printf("sigchld_handler: Job [%d] (%d) deleted\n", jid, pid);
-        deletejob(jobs, pid);
-        sigprocmask(SIG_SETMASK, &prev_all, NULL);
+        if(WIFEXITED(status)) {
+            if(verbose) printf("sigchld_handler: Job [%d] (%d) deleted\n", jid, pid);            
+            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+            deletejob(jobs, pid);
+            sigprocmask(SIG_SETMASK, &prev_all, NULL);
+            if(verbose) printf("Job [%d] (%d) terminates OK (status 0)\n", jid, pid);
+        }else if(WIFSTOPPED(status)) {
+            printf("Job [%d] (%d) stopped by signal %d\n", jid, pid, WSTOPSIG(status));
+            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+            getjobpid(jobs, pid) -> state = ST;
+            sigprocmask(SIG_SETMASK, &prev_all, NULL);
+        }else if(WIFSIGNALED(status)) {
+            printf("Job [%d] (%d) termanated by signal 2\n", jid, pid);
+            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+            deletejob(jobs, pid);
+            sigprocmask(SIG_SETMASK, &prev_all, NULL);
+        }
     }
-    if(errno != ECHILD) unix_error("waitpid error");
     errno = olderrno;
-    if(verbose) printf("Job [%d] (%d) terminates OK (status 0)\n", jid, pid);
     if(verbose) printf("sigchld_handler: exiting\n");
     return;
 }
@@ -338,6 +386,13 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+    pid_t pid;
+    pid = fgpid(jobs);
+    // printf("\n%d %d\n", pid, getpid());
+    if(pid != 0) {
+        kill(-pid, 2);
+    }
+    // printf("over\n");
     return;
 }
 
@@ -348,6 +403,13 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
+    int pid;
+    pid = fgpid(jobs);
+    // printf("\n%d %d\n", pid, getpid());
+    if(pid != 0) {
+        kill(-pid, 20);
+    }
+    // printf("over\n");
     return;
 }
 
@@ -405,7 +467,7 @@ int addjob(struct job_t *jobs, pid_t pid, int state, char *cmdline)
 	    strcpy(jobs[i].cmdline, cmdline);
   	    if(verbose){
 	        printf("Added job [%d] %d %s\n", jobs[i].jid, jobs[i].pid, jobs[i].cmdline);
-            }
+        }
             return 1;
 	}
     }
