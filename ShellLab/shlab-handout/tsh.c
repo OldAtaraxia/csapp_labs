@@ -287,8 +287,13 @@ void do_bgfg(char **argv)
 {
     int pid = -1, jid = -1;
     sigset_t mask_all, prev;
+    struct job_t* job_ptr;
 
     sigfillset(&mask_all);
+    if(argv[1] == NULL) {
+        printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        return;
+    }
     if(argv[1][0] == '%') {
         jid = 0;
         char* ctr = argv[1];
@@ -298,7 +303,7 @@ void do_bgfg(char **argv)
             jid += (*ctr) - '0';
             ctr++;
         }
-    }else{
+    }else if(argv[1][0] >= '0' && argv[1][0] <= '9'){
         pid = 0;
         char* ctr = argv[1];
         while((*ctr) != '\0') {
@@ -306,10 +311,28 @@ void do_bgfg(char **argv)
             pid += (*ctr) - '0';
             ctr++;
         }
+    }else {
+        printf("%s: argument must be a PID or %%jobid\n", argv[0]);
+        return;
     }
-    if(pid == -1) pid = getjobjid(jobs, jid)->pid;
-    struct job_t* job_ptr = getjobpid(jobs, pid);
+    if(pid == -1) { 
+        job_ptr = getjobjid(jobs, jid);
+        if(job_ptr == NULL) {
+            printf("%%%d: No such job\n", jid);
+            return;
+        }
+        pid = job_ptr->pid;
+    }else {
+        job_ptr = getjobpid(jobs, pid);
+        if(job_ptr == NULL) {
+            printf("(%d): No such process\n", pid);
+            return;
+        }
+    }
     if(!strcmp(argv[0], "bg")) {
+        sigprocmask(SIG_BLOCK, &mask_all, &prev);
+        job_ptr->state = BG;
+        sigprocmask(SIG_SETMASK, &prev, NULL);
         kill(-pid, 18);
         printf("[%d] (%d) %s", pid2jid(pid), pid, job_ptr->cmdline);
     }else {
